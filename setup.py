@@ -38,6 +38,6 @@ setup(
     ],
     keywords='reinforcement, machine, learning, research',
     packages=find_packages(),
-    install_requires=read_requirements_file('requirements.txt'),
+    #install_requires=read_requirements_file('requirements.txt'),
     license='MIT',
 )

@@ -7,7 +7,6 @@ from jaxrl.datasets.dataset import Dataset
 
 
 class ReplayBuffer(Dataset):
-
     def __init__(self, observation_space: gym.spaces.Box,
                  action_space: Union[gym.spaces.Discrete,
                                      gym.spaces.Box], capacity: int):
@@ -33,6 +32,8 @@ class ReplayBuffer(Dataset):
 
         self.insert_index = 0
         self.capacity = capacity
+        self.episode_starts = np.array([0])
+        self.episode_ends = np.array([])
 
     def initialize_with_dataset(self, dataset: Dataset,
                                 num_samples: Optional[int]):
@@ -75,3 +76,19 @@ class ReplayBuffer(Dataset):
 
         self.insert_index = (self.insert_index + 1) % self.capacity
         self.size = min(self.size + 1, self.capacity)
+        
+        if mask == 0.0:
+            self.episode_ends.append(self.insert_index)
+            self.episode_starts.append(self.insert_index+1)
+
+    def save(self, path, step=0):
+        np.savez_compressed(path + '/replay_buffer__%d.npz' % step, self.observations,
+                            self.actions, self.rewards, self.masks,
+                            self.dones_float, self.next_observations,
+                            self.insert_index, self.size, self.episode_starts,
+                            self.episode_ends)
+
+    def load(self, path, step=0):
+        (self.observations, self.actions, self.rewards, self.masks,
+         self.dones_float, self.next_observations, self.insert_index,
+         self.size, self.episode_starts, self.episode_ends) = np.load(path + '/replay_buffer__%d.npz' % step)

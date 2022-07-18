@@ -7,9 +7,10 @@ import tqdm
 from absl import app, flags
 from ml_collections import config_flags
 from tensorboardX import SummaryWriter
+import sys
+sys.path.append('../')
 
-from jaxrl.agents import (AWACLearner, DDPGLearner, REDQLearner, SACLearner,
-                          SACV1Learner)
+from jaxrl.agents import SACLearner
 from jaxrl.datasets import ReplayBuffer
 from jaxrl.evaluation import evaluate
 from jaxrl.utils import make_env
@@ -33,6 +34,7 @@ flags.DEFINE_boolean('save_video', False, 'Save videos during evaluation.')
 flags.DEFINE_boolean('track', False, 'Track experiments with Weights and Biases.')
 flags.DEFINE_string('wandb_project_name', "jaxrl", "The wandb's project name.")
 flags.DEFINE_string('wandb_entity', None, "the entity (team) of wandb's project")
+flags.DEFINE_integer('replay_save_interval', 100_000, 'Save replay each X steps.')
 config_flags.DEFINE_config_file(
     'config',
     'configs/sac_default.py',
@@ -114,6 +116,8 @@ def main(_):
         else:
             action = agent.sample_actions(observation)
         next_observation, reward, done, info = env.step(action)
+        if FLAGS.env_name == 'MountainCarContinuous-v0':
+            reward = reward + 13 * np.abs(next_observation[1])
 
         if not done or 'TimeLimit.truncated' in info:
             mask = 1.0
@@ -155,10 +159,8 @@ def main(_):
 
             eval_returns.append(
                 (info['total']['timesteps'], eval_stats['return']))
-            np.savetxt(os.path.join(FLAGS.save_dir, f'{FLAGS.seed}.txt'),
-                       eval_returns,
-                       fmt=['%d', '%.1f'])
 
-
+        if i % FLAGS.replay_save_interval == 0:
+            replay_buffer.save('replay_buffer', step=i)
 if __name__ == '__main__':
     app.run(main)
