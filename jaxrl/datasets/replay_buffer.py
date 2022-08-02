@@ -78,8 +78,8 @@ class ReplayBuffer(Dataset):
         self.size = min(self.size + 1, self.capacity)
         
         if mask == 0.0:
-            self.episode_ends.append(self.insert_index)
-            self.episode_starts.append(self.insert_index+1)
+            self.episode_ends = np.append(self.episode_ends, self.insert_index)
+            self.episode_starts = np.appends( self.episode_starts, self.insert_index+1)
 
     def save(self, path, step=0):
         np.savez_compressed(path + '/replay_buffer__%d.npz' % step, self.observations,

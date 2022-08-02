@@ -161,6 +161,8 @@ def main(_):
                 (info['total']['timesteps'], eval_stats['return']))
 
         if i % FLAGS.replay_save_interval == 0:
-            replay_buffer.save('replay_buffer', step=i)
+            if not os.path.exists(os.path.join(FLAGS.save_dir,'replay_buffer')):
+                os.makedirs(os.path.join(FLAGS.save_dir,'replay_buffer'), exists_ok=True)
+            replay_buffer.save(os.path.join(FLAGS.save_dir,'replay_buffer'), step=i)
 if __name__ == '__main__':
     app.run(main)
